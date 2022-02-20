@@ -9,7 +9,7 @@
 - Shows only markdown files in a file tree
 - Shows table of contents (h1, h2 tags)
 
-![]()
+![](https://github.com/komarowski/Explorer-md/blob/main/images/screenshot.jpg)
 
 ## Getting Started
 
