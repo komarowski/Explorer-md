@@ -2,10 +2,6 @@
 
 **Explorer.md** is a simple console application for generating html docs from markdown files and display those files in a tree structure. 
 
-## Demo
-
-[komarowski.github.io](https://komarowski.github.io/)
-
 ## Features
 
 - Translates .md files to .html with a pure HTML layout (you can change `template.html` and add custom CSS or JS)
