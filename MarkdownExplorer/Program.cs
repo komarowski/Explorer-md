@@ -1,25 +1,27 @@
 ﻿using MarkdownExplorer.Services;
 using MarkdownExplorer.Entities;
+using MarkdownExplorer;
 
 LogService.WriteGreeting();
-var repository = FileService.GetAppRepository();
-if (repository is not null)
+
+const string AppSettingsPath = "appsettings.json";
+AppSettings? appSettings = FileService.GetAppSettings(AppSettingsPath);
+if (appSettings is null)
 {
-  LogService.WriteLog("Walking Directory Tree...\n", LogType.Info);
-  var tree = new TreeStructure();
-  tree = FileService.WalkDirectoryTree(new DirectoryInfo(repository.FolderFrom), tree, repository);
-  LogService.WriteLog($"Found {repository.MarkdownFilesNewCache.Count()} markdown files\n", LogType.Info);
-  FileService.WriteNewCache(repository.MarkdownFilesNewCache);
-  LogService.WriteLog($"Found {repository.MarkdownFilesToUpdate.Count()} markdown files to update\n", LogType.Info);
-
-  var deleteFiles = repository.GetMarkdownFilesToDelete();
-  FileService.DeleteFiles(deleteFiles, repository.FolderTo);
-  LogService.WriteLog($"Found {deleteFiles.Count()} markdown files to delete\n", LogType.Info);
-
-  LogService.WriteLog("Rendering markdown to html...\n", LogType.Info);
-  RenderService.MarkdownToHtml(repository);
-  RenderService.GenerateJS(tree, repository);
-  LogService.WriteEnding();
+  LogService.WriteLog("\"appsetting.json\" file doesn't exist\n", LogType.Error);
+  return;
 }
 
-Console.Read();
+if (!Directory.Exists(appSettings.FolderFrom) || !Directory.Exists(appSettings.FolderTo))
+{
+  LogService.WriteLog("\"appsetting\" directories don't exist\n", LogType.Error);
+  return;
+}
+
+var renderService = new RenderService(appSettings);
+renderService.RenderAllHtml();
+
+var _ = new FileWatcher(renderService, appSettings.FolderFrom);
+
+LogService.WriteColor("Press enter to exit.\n\n", ConsoleColor.Cyan);
+Console.ReadLine();

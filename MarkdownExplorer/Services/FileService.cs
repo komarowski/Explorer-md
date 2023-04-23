@@ -1,142 +1,59 @@
 using MarkdownExplorer.Entities;
+using System.Text.Json;
 
 namespace MarkdownExplorer.Services
 {
   /// <summary>
   /// Service for working with files.
   /// </summary>
-  public class FileService
+  public static class FileService
   {
-    private const string AppSettingsPath = "appsettings.json";
-
-    private const string AppCachePath = "appcache.json";
+    /// <summary>
+    /// Write object with type T to json file.
+    /// </summary>
+    /// <typeparam name="T">Object Type.</typeparam>
+    /// <param name="_object">Instance of type T.</param>
+    /// <param name="filePath">File path.</param>
+    public static void WriteJson<T>(T _object, string filePath)
+    {
+      string jsonString = JsonSerializer.Serialize(_object);
+      File.WriteAllText(filePath, jsonString);
+    }
 
     /// <summary>
-    /// Get repository.
+    /// Read object with type T from json file.
     /// </summary>
-    /// <returns>Repository or null.</returns>
-    public static Repository? GetAppRepository()
+    /// <typeparam name="T">Object Type.</typeparam>
+    /// <param name="filePath">File path.</param>
+    /// <returns>Instance of type T.</returns>
+    public static T? ReadJson<T>(string filePath)
     {
-      var appSettings = GetAppSettings();
-      if (appSettings is not null && IsAppSettingsDirectoriesExist(appSettings))
+      if (!File.Exists(filePath))
       {
-        var markdownFiles = GetMarkdownFiles();
-        var result = new Repository(appSettings.FolderFrom, appSettings.FolderTo, markdownFiles);
-        return result;    
+        return default(T);
       }
-      
-      return null;
+      var jsonString = File.ReadAllText(filePath);
+      return JsonSerializer.Deserialize<T>(jsonString);
     }
 
     /// <summary>
     /// Get application settings.
     /// </summary>
+    /// <param name="appSettingsPath">Application settings file path.</param>
     /// <returns>AppSettings or null.</returns>
-    public static AppSettings? GetAppSettings()
+    public static AppSettings? GetAppSettings(string appSettingsPath)
     {
-      var result = JsonService.ReadJson<AppSettings>(AppSettingsPath);
+      var result = ReadJson<AppSettings>(appSettingsPath);
       if (result is null)
       {
-        LogService.WriteLog("\"appsetting.json\" file doesn't exist\n", LogType.Error);
-        var appSettings = new AppSettings()
+        var newAppSettings = new AppSettings()
         { 
           FolderFrom = Path.Combine(Environment.CurrentDirectory, "From"),
           FolderTo = Path.Combine(Environment.CurrentDirectory, "To")
         };
-        JsonService.WriteJson(appSettings, AppSettingsPath);
+        WriteJson(newAppSettings, appSettingsPath);
       }
       return result;
-    }
-
-    /// <summary>
-    /// Checking if directories in "appsettings.json" exist.
-    /// </summary>
-    /// <param name="appSettings">AppSettings.</param>
-    /// <returns>Exist?</returns>
-    public static bool IsAppSettingsDirectoriesExist(AppSettings appSettings)
-    {
-      if (!Directory.Exists(appSettings.FolderFrom))
-      {
-        LogService.WriteLog("Source folder doesn't exist", LogType.Error);
-        return false;
-      }
-
-      if (!Directory.Exists(appSettings.FolderTo))
-      {
-        LogService.WriteLog("Destination folder doesn't exist", LogType.Error);
-        return false;
-      }
-
-      return true;
-    }
-
-    /// <summary>
-    /// Get list of markdown files processed last time.
-    /// </summary>
-    /// <returns>List of MarkdownFile.</returns>
-    public static List<MarkdownFile> GetMarkdownFiles()
-    {
-      var result = JsonService.ReadJson<List<MarkdownFile>>(AppCachePath);
-      if (result is null)
-      {
-        LogService.WriteLog("\"appcache.json\" file doesn't exist\n", LogType.Info);
-        return new List<MarkdownFile>();
-      }
-      return result;
-    }
-
-    /// <summary>
-    /// Walk a directory tree by using recursion.
-    /// </summary>
-    /// <param name="root">Root directory.</param>
-    /// <param name="tree">Storing information.</param>
-    /// <param name="repository">Repository.</param>
-    /// <returns>Information about the folder structure.</returns>
-    public static TreeStructure WalkDirectoryTree(DirectoryInfo root, TreeStructure tree, Repository repository)
-    {
-      FileInfo[]? files = null;
-
-      try
-      {
-        files = root.GetFiles("*.*");
-      }
-      catch (UnauthorizedAccessException ex)
-      {
-        LogService.WriteLog(ex.Message, LogType.Error);
-      }
-      catch (DirectoryNotFoundException ex)
-      {
-        LogService.WriteLog(ex.Message, LogType.Error);
-      }
-
-      if (files is not null)
-      {
-        foreach (FileInfo file in files)
-        {
-          if (file.Extension == ".md")
-          {
-            var htmlName = repository.AddMarkdown(file);
-            var title = GetFileTitle(file);
-            tree.AddFileNode(htmlName, title);
-          }
-          else
-          {
-            CopyFile(file, repository.FolderTo);
-          }
-        }
-
-        DirectoryInfo[] subDirs = root.GetDirectories();
-        foreach (DirectoryInfo dirInfo in subDirs)
-        {
-          var folderName = dirInfo.Name;
-          var htmlName = Repository.TransformPath(Path.GetRelativePath(repository.FolderFrom, dirInfo.FullName));
-          tree.AddFolderBlockStart(htmlName, folderName);
-          tree = WalkDirectoryTree(dirInfo, tree, repository);
-          tree.AddFolderBlockEnd();
-        }
-      }
-
-      return tree;
     }
 
     /// <summary>
@@ -144,7 +61,7 @@ namespace MarkdownExplorer.Services
     /// </summary>
     /// <param name="file">File information.</param>
     /// <returns>Title.</returns>
-    private static string GetFileTitle(FileInfo file)
+    public static string GetFileTitle(FileInfo file)
     {
       using (var logStream = new StreamReader(file.FullName))
       {
@@ -164,43 +81,36 @@ namespace MarkdownExplorer.Services
     }
 
     /// <summary>
-    /// Copy assets file to target folder.
+    /// Copy assets source file to target folder.
     /// </summary>
-    /// <param name="file">Assets file.</param>
+    /// <param name="sourceFile">Source file.</param>
     /// <param name="folderTo">Target folder.</param>
-    private static void CopyFile(FileInfo file, string folderTo)
+    public static void CopyFile(FileInfo sourceFile, string folderTo)
     {
-      var targetPath = Path.Combine(folderTo, file.Name);
-      if (!File.Exists(targetPath))
+      var targetPath = Path.Combine(folderTo, sourceFile.Name);
+      var targetFile = new FileInfo(targetPath);
+      if (!File.Exists(targetPath) || sourceFile.LastWriteTimeUtc > targetFile.LastWriteTimeUtc)
       {
-        File.Copy(file.FullName, targetPath, true);
+        File.Copy(sourceFile.FullName, targetPath, true);
       }
     }
 
     /// <summary>
-    /// Delete html files from target folder.
+    /// Get HTML code from markdown or folder full path.
     /// </summary>
-    /// <param name="markdownFiles">Files to delete.</param>
-    /// <param name="folderTo">Target folder.</param>
-    public static void DeleteFiles(List<MarkdownFile> markdownFiles, string folderTo)
+    /// <param name="path">Markdown or folder full path.</param>
+    /// <returns>HTML code.</returns>
+    public static string GetHtmlCode(string folderFrom, string path)
     {
-      foreach (var file in markdownFiles)
+      if (path.EndsWith(".md"))
       {
-        var path = Path.Combine(folderTo, $"{file.TargetName}.html");
-        if (File.Exists(path))
-        {
-          File.Delete(path);
-        }
+        path = path.Replace(".md", String.Empty);
       }
-    }
-
-    /// <summary>
-    /// Write "appcache.json".
-    /// </summary>
-    /// <param name="markdownFilesNewCache">Files to cache.</param>
-    public static void WriteNewCache(List<MarkdownFile> markdownFilesNewCache)
-    {
-      JsonService.WriteJson(markdownFilesNewCache, AppCachePath);
+      var relativePath = Path.GetRelativePath(folderFrom, path);
+      return relativePath
+        .ToLower()
+        .Replace(' ', '-')
+        .Replace("\\", "__");
     }
   }
 }
