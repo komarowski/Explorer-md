@@ -1,25 +1,56 @@
 ﻿using MarkdownExplorer.Services;
 using MarkdownExplorer.Entities;
+using MarkdownExplorer;
 
-LogService.WriteGreeting();
-var repository = FileService.GetAppRepository();
-if (repository is not null)
+
+ConsoleService.WriteGreeting();
+
+AppSettings? appSettings = JsonService.ReadJson<AppSettings>(JsonService.AppSettingsFile);
+if (appSettings is null)
 {
-  LogService.WriteLog("Walking Directory Tree...\n", LogType.Info);
-  var tree = new TreeStructure();
-  tree = FileService.WalkDirectoryTree(new DirectoryInfo(repository.FolderFrom), tree, repository);
-  LogService.WriteLog($"Found {repository.MarkdownFilesNewCache.Count()} markdown files\n", LogType.Info);
-  FileService.WriteNewCache(repository.MarkdownFilesNewCache);
-  LogService.WriteLog($"Found {repository.MarkdownFilesToUpdate.Count()} markdown files to update\n", LogType.Info);
+  ConsoleService.WriteLog($"\"{JsonService.AppSettingsFile}\" file doesn't exist.", LogType.Warning);
+  string? sourceFolder = null;
+  while (string.IsNullOrEmpty(sourceFolder))
+  {
+    sourceFolder = ConsoleService.ReadLine("Enter source folder:");
+  }
 
-  var deleteFiles = repository.GetMarkdownFilesToDelete();
-  FileService.DeleteFiles(deleteFiles, repository.FolderTo);
-  LogService.WriteLog($"Found {deleteFiles.Count()} markdown files to delete\n", LogType.Info);
+  if (!Directory.Exists(sourceFolder))
+  {
+    ConsoleService.WriteLog($"Entered folder \"{sourceFolder}\" doesn't exist.", LogType.Warning);
+    sourceFolder = Environment.CurrentDirectory;
+    ConsoleService.WriteLog($"The current folder \"{sourceFolder}\" is set as the source folder.", LogType.Info);
+  }
 
-  LogService.WriteLog("Rendering markdown to html...\n", LogType.Info);
-  RenderService.MarkdownToHtml(repository);
-  RenderService.GenerateJS(tree, repository);
-  LogService.WriteEnding();
+  appSettings = new AppSettings() { SourceFolder = sourceFolder };
+  JsonService.WriteJson(appSettings, JsonService.AppSettingsFile);
+  ConsoleService.WriteLog($"\"{JsonService.AppSettingsFile}\" file has been created.", LogType.Info);
 }
 
-Console.Read();
+if (!Directory.Exists(appSettings.SourceFolder))
+{
+  ConsoleService.WriteLog($"Source folder \"{appSettings.SourceFolder}\" doesn't exist.", LogType.Error);
+  ConsoleService.ReadLine("Press 'enter' to exit.");
+  return;
+}
+
+var convertService = new ConvertService(appSettings);
+convertService.ConvertAllHtml();
+var _ = new FileWatcher(convertService, appSettings.SourceFolder);
+
+string? command;
+do
+{
+  command = ConsoleService.ReadLine("Enter command or press 'enter' to exit:");
+  if (command == "refresh")
+  {
+    convertService.RefreshAll = true;
+    convertService.ConvertAllHtml();
+    convertService.RefreshAll = false;
+  }
+  else if (!string.IsNullOrEmpty(command))
+  {
+    ConsoleService.WriteLog($"The \"{command}\" command does not exist.", LogType.Info);
+  }
+}
+while (!string.IsNullOrEmpty(command));

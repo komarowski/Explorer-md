@@ -37,7 +37,7 @@
   --icon: #1b657e;
   --border: #303b44;
   --border-light: #4e606e;
-  --code: #98bad4;
+  --code: #c2d6e6;
 }
 
 body {
@@ -75,7 +75,6 @@ body {
   display: flex;
   width: 100%;
   flex-grow: 1;
-  max-width: calc(100% - 305px);
 }
 
 .container {
@@ -134,7 +133,6 @@ body {
 }
 
 .blog-container {
-  max-width: 950px;
   line-height: 1.6;
 }
 
@@ -144,6 +142,10 @@ body {
 
 .blog-container h1 {
   border-bottom: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.blog-container h2 {
   margin-top: 2rem;
 }
 
@@ -279,7 +281,8 @@ body {
 .tree-view-item-current {
   color: var(--link);
   border-radius: 5px;
-  background-color: #c3ccd5;
+  background-color: var(--code);
+  font-weight: bold;
 }
 
 tr {

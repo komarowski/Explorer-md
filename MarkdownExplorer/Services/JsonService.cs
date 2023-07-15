@@ -3,10 +3,15 @@ using System.Text.Json;
 namespace MarkdownExplorer.Services
 {
   /// <summary>
-  /// Service for working with json files.
+  /// Service for json files management.
   /// </summary>
-  public class JsonService
+  public static class JsonService
   {
+    /// <summary>
+    /// App settings file.
+    /// </summary>
+    public const string AppSettingsFile = "appsettings.json";
+
     /// <summary>
     /// Write object with type T to json file.
     /// </summary>
@@ -29,7 +34,7 @@ namespace MarkdownExplorer.Services
     {
       if (!File.Exists(filePath))
       {
-        return default(T);
+        return default;
       }
       var jsonString = File.ReadAllText(filePath);
       return JsonSerializer.Deserialize<T>(jsonString);

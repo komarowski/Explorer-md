@@ -5,21 +5,22 @@ namespace MarkdownExplorer.Services
   /// </summary>
   public enum LogType
   {
+    Normal,
     Info,
     Warning,
     Error
   }
 
   /// <summary>
-  /// Service for logging.
+  /// Service for console methods.
   /// </summary>
-  public class LogService
+  public class ConsoleService
   {
     /// <summary>
     /// Write color text.
     /// </summary>
     /// <param name="text">Text.</param>
-    /// <param name="color">Color.</param>
+    /// <param name="color">Text color.</param>
     public static void WriteColor(string text, ConsoleColor color)
     {
       Console.ForegroundColor = color;
@@ -32,15 +33,11 @@ namespace MarkdownExplorer.Services
     /// </summary>
     public static void WriteGreeting()
     {
-      WriteColor("Welcome to Markdown Explorer!\n\n", ConsoleColor.Cyan);
-    }
-
-    /// <summary>
-    /// Write ending.
-    /// </summary>
-    public static void WriteEnding()
-    {
-      WriteColor("The program completed successfully.\n\n", ConsoleColor.Cyan);
+      WriteColor("Welcome to Markdown Explorer!\n", ConsoleColor.Cyan);
+      Console.WriteLine("--------------------------------------------");
+      Console.WriteLine("Commands:");
+      Console.WriteLine("\trefresh - force refresh all html files");
+      Console.WriteLine("--------------------------------------------\n");
     }
 
     /// <summary>
@@ -62,10 +59,23 @@ namespace MarkdownExplorer.Services
         case LogType.Error:
           WriteColor(log, ConsoleColor.DarkRed);
           break;
+        case LogType.Normal:
         default:
           Console.Write(log);
           break;
       }
+      Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Console.ReadLine() with enter text.
+    /// </summary>
+    /// <param name="enterText">Enter text.</param>
+    /// <returns>Input string.</returns>
+    public static string? ReadLine(string enterText)
+    {
+      Console.WriteLine(enterText);
+      return Console.ReadLine();
     }
   }
 }

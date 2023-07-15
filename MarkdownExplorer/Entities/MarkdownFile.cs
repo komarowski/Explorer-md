@@ -6,18 +6,13 @@ namespace MarkdownExplorer.Entities
   public class MarkdownFile
   {
     /// <summary>
-    /// HTML file name.
+    /// HTML file code.
     /// </summary>
-    public string TargetName { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
 
     /// <summary>
     /// Relative markdown file path.
     /// </summary>
     public string SourcePath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Last update time.
-    /// </summary>
-    public DateTime LastUpdate { get; set; }
   }
 }

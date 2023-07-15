@@ -8,11 +8,11 @@ namespace MarkdownExplorer.Entities
     /// <summary>
     /// Source folder.
     /// </summary>
-    public string FolderFrom { get; set; } = string.Empty;
+    public string SourceFolder { get; set; } = string.Empty;
 
     /// <summary>
-    /// Target folder.
+    /// List of ignore folders in source folder.
     /// </summary>
-    public string FolderTo { get; set; } = string.Empty; 
+    public List<string> IngnoreFolders { get; set; } = new List<string>();
   }
 }
