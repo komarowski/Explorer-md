@@ -1,29 +1,26 @@
 # Explorer.md
 
-**Explorer.md** is a simple console application for generating html docs from markdown files and display those files in a tree structure. 
+**Explorer.md** is a simple console application for generating html docs from markdown files for use on your local machine. It also generates a tree view of these files for quick navigation. 
 
 ## Features
 
-- Translates .md files to .html with a pure HTML layout (you can change `template.html` and add custom CSS or JS)
-- Shows only markdown files in a file tree
+- Converts .md files to .html with a pure HTML layout (you can customize CSS or JS)
+- Shows a tree view of markdown files
 - Shows table of contents (h1, h2 tags)
+- Tracks changes in markdown files and modifies html accordingly.
 
-![](https://github.com/komarowski/Explorer-md/blob/main/images/screenshot.jpg)
+## Demo
 
-## Getting Started
-
-- Clone the repository
-- Define a folder with markdown files and target folder in the `appsettings.json`
-- Run the project in the given directory (you need [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0) to build and run this application)
-
-```
-> dotnet run
-```
+![](https://github.com/komarowski/Explorer-md/blob/main/images/demo.gif)
 
 ## Conventions
 
-### Custom HTML
+### Absolute paths
+
+Files refer to each other and to static files via absolute paths. If you moved the source folder, run the "refresh" command in the application.
+
+### Custom template
 
 The default HTML is written in code and has basic inline styles. You can change `template.html` in the application root folder.
 
-An example `assets/template.html` is provided in this repository. Copy also the `assets` to the folder with the HTML files.
+An example `assets/template.html` is provided in this repository. Copy also the `assets` to the folder with the HTML files. Note that you must provide absolute paths to assets files in the `template.html`.
