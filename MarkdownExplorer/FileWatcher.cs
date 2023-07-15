@@ -8,10 +8,10 @@ namespace MarkdownExplorer
   public class FileWatcher
   {
     private readonly FileSystemWatcher fileSystemWatcher;
-    private readonly RenderService renderService;
+    private readonly ConvertService renderService;
     private DateTime lastRead = DateTime.MinValue;
 
-    public FileWatcher(RenderService renderService, string rootDirectory)
+    public FileWatcher(ConvertService renderService, string rootDirectory)
     {
       this.renderService = renderService;
       this.fileSystemWatcher = new FileSystemWatcher(rootDirectory);
@@ -27,41 +27,43 @@ namespace MarkdownExplorer
 
     private void OnChanged(object sender, FileSystemEventArgs e)
     {
-      DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
-      if (e.ChangeType != WatcherChangeTypes.Changed || lastWriteTime == this.lastRead)
+      if (CheckLastReadTime(WatcherChangeTypes.Changed, e))
       {
-        return;
+        renderService.ConvertHtml(e.FullPath);
+        ConsoleService.WriteLog($"changed \"{e.Name}\"", LogType.Info);
       }
-
-      this.lastRead = lastWriteTime;
-      renderService.RenderHtml(e.FullPath);
-      LogService.WriteLog($"changed \"{e.Name}\"\n", LogType.Info);
     }
 
     private void OnCreated(object sender, FileSystemEventArgs e)
     {
-      DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
-      if (e.ChangeType != WatcherChangeTypes.Created || lastWriteTime == this.lastRead)
+      if (CheckLastReadTime(WatcherChangeTypes.Created, e))
       {
-        return;
+        ConsoleService.WriteLog($"added \"{e.Name}\"", LogType.Info);
+        renderService.ConvertAllHtml();       
       }
-
-      this.lastRead = lastWriteTime;
-      renderService.RenderAllHtml();
-      LogService.WriteLog($"added \"{e.Name}\"\n", LogType.Info);
     }
 
     private void OnDeleted(object sender, FileSystemEventArgs e)
     {
-      DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
-      if (e.ChangeType != WatcherChangeTypes.Deleted || lastWriteTime == this.lastRead)
+      if (CheckLastReadTime(WatcherChangeTypes.Deleted, e))
       {
-        return;
+        ConsoleService.WriteLog($"deleted \"{e.Name}\"", LogType.Info);
+        renderService.ConvertAllHtml();
       }
+    }
 
-      this.lastRead = lastWriteTime;
-      renderService.RenderAllHtml();
-      LogService.WriteLog($"deleted \"{e.Name}\"\n", LogType.Info);
+    /// <summary>
+    /// Duplicate Event Check.
+    /// </summary>
+    private bool CheckLastReadTime(WatcherChangeTypes watcherChangeType, FileSystemEventArgs e)
+    {
+      DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
+      var isValid = e.ChangeType == watcherChangeType && lastWriteTime != this.lastRead;
+      if (isValid)
+      {
+        this.lastRead = lastWriteTime;
+      }
+      return isValid;
     }
   }
 }

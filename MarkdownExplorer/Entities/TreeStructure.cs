@@ -3,7 +3,7 @@ using System.Text;
 namespace MarkdownExplorer.Entities
 {
   /// <summary>
-  /// Storing information about the folder structure.
+  /// Storing information about the source folder structure.
   /// </summary>
   public class TreeStructure
   {
@@ -15,9 +15,9 @@ namespace MarkdownExplorer.Entities
     public string Content => this.content.ToString();
 
     /// <summary>
-    /// Files to generate.
+    /// List of markdown files to convert to html.
     /// </summary>
-    public List<MarkdownFile> MarkdownFilesToGenerate { get; }
+    public List<MarkdownFile> MdFilesToConvert { get; }
 
     /// <summary>
     /// Storing information about the folder structure.
@@ -25,17 +25,19 @@ namespace MarkdownExplorer.Entities
     public TreeStructure()
     {
       this.content = new StringBuilder();
-      this.MarkdownFilesToGenerate = new List<MarkdownFile>();
+      this.MdFilesToConvert = new List<MarkdownFile>();
     }
 
     /// <summary>
     /// Add file node to tree view.
     /// </summary>
+    /// <param name="filePath">Absolute file path.</param>
     /// <param name="fileCode">File code.</param>
     /// <param name="title">File title.</param>
-    public void AddFileNode(string fileCode, string title)
+    public void AddFileNode(string filePath, string fileCode, string title)
     {
-      this.content.Append($"<a id=\"{fileCode}\" href=\"{fileCode}.html\" class=\"tree-view-item\">{title}</a>");
+      var localFilePath = "file:///" + filePath.Replace('\\', '/');
+      this.content.Append($"<a id=\"{fileCode}\" href=\"{localFilePath}\" class=\"tree-view-item\">{title}</a>");
     }
 
     /// <summary>
@@ -57,18 +59,13 @@ namespace MarkdownExplorer.Entities
     }
 
     /// <summary>
-    /// Add a markdown to files to generate.
+    /// Add a markdown to files to generate list.
     /// </summary>
-    /// <param name="markdownPath"></param>
-    /// <param name="code"></param>
+    /// <param name="markdownPath">Markdown path.</param>
+    /// <param name="code">File code.</param>
     public void AddMarkdownToUpdate(string markdownPath, string code)
     {
-      var markdownFile = new MarkdownFile
-      {
-        Code = code,
-        SourcePath = markdownPath,
-      };
-      this.MarkdownFilesToGenerate.Add(markdownFile);
+      this.MdFilesToConvert.Add(new MarkdownFile { Code = code, SourcePath = markdownPath });
     }
   }
 }
