@@ -11,6 +11,11 @@ namespace MarkdownExplorer.Entities
     public string SourceFolder { get; set; } = string.Empty;
 
     /// <summary>
+    /// Target folder.
+    /// </summary>
+    public string TargetFolder { get; set; } = string.Empty;
+
+    /// <summary>
     /// List of ignore folders in source folder.
     /// </summary>
     public List<string> IngnoreFolders { get; set; } = new List<string>();

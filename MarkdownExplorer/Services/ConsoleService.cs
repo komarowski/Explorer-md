@@ -1,3 +1,5 @@
+using Spectre.Console;
+
 namespace MarkdownExplorer.Services
 {
   /// <summary>
@@ -33,39 +35,37 @@ namespace MarkdownExplorer.Services
     /// </summary>
     public static void WriteGreeting()
     {
-      WriteColor("Welcome to Markdown Explorer!\n", ConsoleColor.Cyan);
-      Console.WriteLine("--------------------------------------------");
-      Console.WriteLine("Commands:");
-      Console.WriteLine("\trefresh - force refresh all html files");
-      Console.WriteLine("--------------------------------------------\n");
+      AnsiConsole.Markup("[cyan3 bold underline]  Welcome to Markdown Explorer![/]\n\n");
+      AnsiConsole.Write(new Rule("Commands:").LeftJustified());
+
+
+      //WriteColor("Welcome to Markdown Explorer!\n", ConsoleColor.Cyan);
+      //Console.WriteLine("--------------------------------------------");
+      //Console.WriteLine("Commands:");
+      //Console.WriteLine("\trefresh - force refresh all html files");
+      //Console.WriteLine("--------------------------------------------\n");
     }
 
     /// <summary>
     /// Write log.
     /// </summary>
-    /// <param name="log">Log text.</param>
+    /// <param name="text">Log text.</param>
     /// <param name="logType">Log type.</param>
-    public static void WriteLog(string log, LogType logType)
+    public static void WriteLog(string text, LogType logType)
     {
-      WriteColor("LOG: ", ConsoleColor.Gray);
-      switch (logType)
-      {
-        case LogType.Info:
-          WriteColor(log, ConsoleColor.DarkCyan);
-          break;
-        case LogType.Warning:
-          WriteColor(log, ConsoleColor.DarkYellow);
-          break;
-        case LogType.Error:
-          WriteColor(log, ConsoleColor.DarkRed);
-          break;
-        case LogType.Normal:
-        default:
-          Console.Write(log);
-          break;
-      }
-      Console.WriteLine();
+      AnsiConsole.Markup("[silver]LOG: [/]");
+      var log = GetLogString(text, logType);
+      AnsiConsole.Markup(log);
+      AnsiConsole.WriteLine();
     }
+
+    private static string GetLogString(string text, LogType logType) => (logType) switch
+    {
+      (LogType.Info) => $"[darkcyan]{text}[/]",
+      (LogType.Warning) => $"[gold3_1]{text}[/]",
+      (LogType.Error) => $"[darkcyan]{text}[/]",
+      (LogType.Normal) or _ => text
+    };
 
     /// <summary>
     /// Console.ReadLine() with enter text.
