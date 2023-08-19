@@ -4,59 +4,46 @@ using System.Text;
 
 namespace MarkdownExplorer.Services
 {
-  public enum FileLocationMode
-  {
-    Absolute,
-    Relative
-  }
-
   /// <summary>
   /// Service for converting markdown files to html.
   /// </summary>
   public class ConvertService
   {
-    private const string HtmlTemplatePath = "template.html";
     private const string IndexHtml = "index.html";
     private const string TreeViewJS = "treeview.js";
+
+    private readonly string treeViewPath;
+    private readonly string indexHtmlPath;
+    private readonly string sourceFolder;
+    private readonly string targetFolder;
+    private readonly List<string> ignoreFolders;
+    private readonly string template;
+    private readonly FileLocationMode locationMode;
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
       .UseAdvancedExtensions()
       .Build();
 
-    private readonly string treeViewPath;
-
-    private readonly string indexHtmlPath;
-
-    private readonly string sourceFolder;
-
-    private readonly string targetFolder;
-
-    private readonly List<string> ignoreFolders;
-
-    private readonly string template;
-
-    private readonly FileLocationMode locationMode;
-
-    /// <summary>
-    /// Update all files anyway.
-    /// </summary>
-    public bool RefreshAll { get; set; }
-
     /// <summary>
     /// Service for rendering static content.
     /// </summary>
     /// <param name="appSettings">Application settings.</param>
-    public ConvertService(AppSettings appSettings, FileLocationMode mode)
+    public ConvertService(AppSettings appSettings)
     {
-      locationMode = mode;
+      template = GetTemplate(appSettings.Template);
+      locationMode = appSettings.LocationMode;
       sourceFolder = appSettings.SourceFolder;
       targetFolder = appSettings.TargetFolder;
-      ignoreFolders = appSettings.IngnoreFolders; 
-      template = GetTemplate();
+      ignoreFolders = appSettings.IngnoreFolders;
       treeViewPath = GetTargetPath(TreeViewJS);
       indexHtmlPath = GetTargetPath(IndexHtml);
     }
 
+    /// <summary>
+    /// Get target path.
+    /// </summary>
+    /// <param name="name">File name.</param>
+    /// <returns>Target path.</returns>
     private string GetTargetPath(string name)
     {
       var targetDirectory = locationMode == FileLocationMode.Absolute ? sourceFolder : targetFolder;
@@ -64,22 +51,26 @@ namespace MarkdownExplorer.Services
     }
 
     /// <summary>
-    /// Get html template.
+    /// Get HTML template.
     /// </summary>
-    /// <returns>Html template.</returns>
-    private static string GetTemplate()
+    /// <param name="templatePath">Template file path.</param>
+    /// <returns>HTML template content.</returns>
+    /// <exception cref="FileNotFoundException">Template file not exist.</exception>
+    private static string GetTemplate(string templatePath)
     {
-      if (File.Exists(HtmlTemplatePath))
+      if (!File.Exists(templatePath))
       {
-        return File.ReadAllText(HtmlTemplatePath, Encoding.UTF8);
+        throw new FileNotFoundException($"\"{templatePath}\" not exists.");
       }
-
-      ConsoleService.WriteLog($"\"{HtmlTemplatePath}\" file not found. Default file generated.", LogType.Warning);
-      File.WriteAllText(HtmlTemplatePath, StaticTemplate.DefaultHTML);
-      return StaticTemplate.DefaultHTML;
+      return File.ReadAllText(templatePath, Encoding.UTF8);
     }
 
-
+    /// <summary>
+    /// Processes the file.
+    /// </summary>
+    /// <param name="file">File.</param>
+    /// <param name="tree">Folder structure.</param>
+    /// <param name="refreshAll">Update all files anyway.</param>
     private void ProcessFile(FileInfo file, TreeStructure tree, bool refreshAll)
     {
       var isAbsoluteLocationMode = locationMode == FileLocationMode.Absolute;
@@ -98,12 +89,15 @@ namespace MarkdownExplorer.Services
         var title = GetFileTitle(file);
         var href = isAbsoluteLocationMode 
           ? "file:///" + htmlFile.FullName.Replace('\\', '/') 
-          : htmlCode;
+          : $"{htmlCode}.html";
         tree.AddFileNode(htmlCode, title, href);
         return;
       }
 
-      if (!isAbsoluteLocationMode)
+      if (!isAbsoluteLocationMode 
+        && file.Extension != ".js" 
+        && file.Extension != ".html" 
+        && file.Extension != ".css")
       {
         var targetPath = Path.Combine(targetFolder, file.Name);
         var targetFile = new FileInfo(targetPath);

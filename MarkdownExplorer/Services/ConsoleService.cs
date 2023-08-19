@@ -7,7 +7,6 @@ namespace MarkdownExplorer.Services
   /// </summary>
   public enum LogType
   {
-    Normal,
     Info,
     Warning,
     Error
@@ -35,15 +34,12 @@ namespace MarkdownExplorer.Services
     /// </summary>
     public static void WriteGreeting()
     {
-      AnsiConsole.Markup("[cyan3 bold underline]  Welcome to Markdown Explorer![/]\n\n");
+      var welcomeString = new Padder(new Markup("[cyan3 bold underline]Welcome to Markdown Explorer![/]")).PadRight(30);
+      AnsiConsole.Write(welcomeString);
       AnsiConsole.Write(new Rule("Commands:").LeftJustified());
-
-
-      //WriteColor("Welcome to Markdown Explorer!\n", ConsoleColor.Cyan);
-      //Console.WriteLine("--------------------------------------------");
-      //Console.WriteLine("Commands:");
-      //Console.WriteLine("\trefresh - force refresh all html files");
-      //Console.WriteLine("--------------------------------------------\n");
+      AnsiConsole.Write(new Padder(new Markup("[darkcyan bold]refresh[/] - force refresh all html files")).PadRight(30));
+      AnsiConsole.Write(new Rule());
+      AnsiConsole.WriteLine();
     }
 
     /// <summary>
@@ -59,23 +55,30 @@ namespace MarkdownExplorer.Services
       AnsiConsole.WriteLine();
     }
 
-    private static string GetLogString(string text, LogType logType) => (logType) switch
+    /// <summary>
+    /// Write log before ReadLine string.
+    /// </summary>
+    /// <param name="text">Log text.</param>
+    /// <param name="logType">Log type.</param>
+    /// <param name="readLineText">ReadLine text.</param>
+    public static void WriteLogBeforeReadLine(string text, LogType logType, string readLineText)
     {
-      (LogType.Info) => $"[darkcyan]{text}[/]",
-      (LogType.Warning) => $"[gold3_1]{text}[/]",
-      (LogType.Error) => $"[darkcyan]{text}[/]",
-      (LogType.Normal) or _ => text
-    };
+      Console.Write("\r");
+      WriteLog(text, logType);
+      Console.Write($"\r{readLineText}");
+    }
 
     /// <summary>
-    /// Console.ReadLine() with enter text.
+    /// Get the colored text of the log.
     /// </summary>
-    /// <param name="enterText">Enter text.</param>
-    /// <returns>Input string.</returns>
-    public static string? ReadLine(string enterText)
+    /// <param name="text">Log text.</param>
+    /// <param name="logType">Log type.</param>
+    /// <returns>Colored text.</returns>
+    private static string GetLogString(string text, LogType logType) => (logType) switch
     {
-      Console.WriteLine(enterText);
-      return Console.ReadLine();
-    }
+      (LogType.Warning) => $"[gold3_1]{text}[/]",
+      (LogType.Error) => $"[red3]{text}[/]",
+      (LogType.Info) or _ => text
+    };
   }
 }

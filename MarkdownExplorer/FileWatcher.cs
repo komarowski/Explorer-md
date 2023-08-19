@@ -30,7 +30,7 @@ namespace MarkdownExplorer
       if (CheckLastReadTime(WatcherChangeTypes.Changed, e))
       {
         renderService.ConvertHtml(e.FullPath);
-        ConsoleService.WriteLog($"changed \"{e.Name}\"", LogType.Info);
+        ConsoleService.WriteLogBeforeReadLine($"changed \"{e.Name}\"", LogType.Info, "> ");
       }
     }
 
@@ -38,7 +38,7 @@ namespace MarkdownExplorer
     {
       if (CheckLastReadTime(WatcherChangeTypes.Created, e))
       {
-        ConsoleService.WriteLog($"added \"{e.Name}\"", LogType.Info);
+        ConsoleService.WriteLogBeforeReadLine($"added \"{e.Name}\"", LogType.Info, "> ");
         renderService.ConvertAllHtml();       
       }
     }
@@ -47,7 +47,7 @@ namespace MarkdownExplorer
     {
       if (CheckLastReadTime(WatcherChangeTypes.Deleted, e))
       {
-        ConsoleService.WriteLog($"deleted \"{e.Name}\"", LogType.Info);
+        ConsoleService.WriteLogBeforeReadLine($"deleted \"{e.Name}\"", LogType.Info, "> ");
         renderService.ConvertAllHtml();
       }
     }

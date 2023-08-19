@@ -5,13 +5,14 @@ using System.Text.Json;
 namespace MarkdownExplorer.Services
 {
   /// <summary>
-  /// Service for json files management.
+  /// Service for reading app settings.
   /// </summary>
   public static class SettingsService
   {
-    /// <summary>
-    /// App settings file.
-    /// </summary>
+    /// <summary>Default HTML template file.</summary>
+    private const string DefaultTemplate = "template.html";
+
+    /// <summary>App settings file.</summary>
     public const string AppSettingsFile = "appsettings.json";
 
     /// <summary>
@@ -42,6 +43,11 @@ namespace MarkdownExplorer.Services
       return JsonSerializer.Deserialize<T>(jsonString);
     }
 
+    /// <summary>
+    /// Checks if the directory exists.
+    /// </summary>
+    /// <param name="directory">Directory.</param>
+    /// <returns>true if the directory exists.</returns>
     private static bool IsDirectoryExists(string directory)
     {
       var result = Directory.Exists(directory);
@@ -52,6 +58,26 @@ namespace MarkdownExplorer.Services
       return result;
     }
 
+    /// <summary>
+    /// Checks if the HTML template exists.
+    /// </summary>
+    /// <param name="templatePath">Template path.</param>
+    /// <returns>true if the template exists.</returns>
+    private static bool IsTemplateExists(string templatePath)
+    {
+      var result = File.Exists(templatePath);
+      if (!result)
+      {
+        ConsoleService.WriteLog($"HTML template file not found.", LogType.Error);
+      }
+      return result;
+    }
+
+    /// <summary>
+    /// Tries to read app settings.
+    /// </summary>
+    /// <param name="appSettings">Application settings.</param>
+    /// <returns>true if the settings were read successfully.</returns>
     public static bool TryReadAppSettings(out AppSettings? appSettings)
     {
       var currentDirectory = Directory.GetCurrentDirectory();
@@ -70,7 +96,8 @@ namespace MarkdownExplorer.Services
         appSettings = ReadJson<AppSettings>(appSettingsFile);
         return appSettings is not null
           && IsDirectoryExists(appSettings.SourceFolder)
-          && IsDirectoryExists(appSettings.TargetFolder);
+          && IsDirectoryExists(appSettings.TargetFolder)
+          && IsTemplateExists(appSettings.Template);
       }
 
       appSettings = null;
@@ -78,26 +105,16 @@ namespace MarkdownExplorer.Services
       {
         SourceFolder = currentDirectory,
         TargetFolder = currentDirectory,
+        Template = DefaultTemplate,
         IngnoreFolders = new List<string>()
       };
       WriteJson(defaultAppSettings, AppSettingsFile);
+      File.WriteAllText("template.html", StaticTemplate.DefaultHTML);
       ConsoleService.WriteLog($"\"{AppSettingsFile}\" file doesn't exist.", LogType.Error);
       ConsoleService.WriteLog("The current folder is set as the source and target folder.", LogType.Info);
       ConsoleService.WriteLog($"\"{AppSettingsFile}\" file has been created.", LogType.Info);
+      ConsoleService.WriteLog($"Default \"template.html\" has been created.", LogType.Info);     
       return false;
-    }
-
-    public static FileLocationMode GetFileLocationMode()
-    {
-      var fileLocation = AnsiConsole.Prompt(
-        new SelectionPrompt<string>()
-          .Title("What is the file location mode?")
-          .PageSize(3)
-          .AddChoices(new[] { "Absolute", "Relative" }));
-
-      return fileLocation == "Absolute" 
-        ? FileLocationMode.Absolute 
-        : FileLocationMode.Relative;
     }
   }
 }
