@@ -1,3 +1,5 @@
+using Spectre.Console;
+
 namespace MarkdownExplorer.Services
 {
   /// <summary>
@@ -5,7 +7,6 @@ namespace MarkdownExplorer.Services
   /// </summary>
   public enum LogType
   {
-    Normal,
     Info,
     Warning,
     Error
@@ -33,49 +34,56 @@ namespace MarkdownExplorer.Services
     /// </summary>
     public static void WriteGreeting()
     {
-      WriteColor("Welcome to Markdown Explorer!\n", ConsoleColor.Cyan);
-      Console.WriteLine("--------------------------------------------");
-      Console.WriteLine("Commands:");
-      Console.WriteLine("\trefresh - force refresh all html files");
-      Console.WriteLine("--------------------------------------------\n");
+      var welcomeString = new Padder(new Markup("[cyan3 bold underline]Welcome to Markdown Explorer![/]")).PadRight(30);
+      AnsiConsole.Write(welcomeString);
+      AnsiConsole.Write(new Rule("Commands:").LeftJustified());
+      var rows = new List<Markup>()
+      {
+        new Markup("[darkcyan bold] refresh[/] - force refresh all html files"),
+        new Markup("[darkcyan bold] restart[/] - restart FileSystemWatcher")
+      };
+      AnsiConsole.Write(new Rows(rows));
+      AnsiConsole.Write(new Rule());
+      AnsiConsole.WriteLine();
     }
 
     /// <summary>
     /// Write log.
     /// </summary>
-    /// <param name="log">Log text.</param>
+    /// <param name="text">Log text.</param>
     /// <param name="logType">Log type.</param>
-    public static void WriteLog(string log, LogType logType)
+    public static void WriteLog(string text, LogType logType)
     {
-      WriteColor("LOG: ", ConsoleColor.Gray);
-      switch (logType)
-      {
-        case LogType.Info:
-          WriteColor(log, ConsoleColor.DarkCyan);
-          break;
-        case LogType.Warning:
-          WriteColor(log, ConsoleColor.DarkYellow);
-          break;
-        case LogType.Error:
-          WriteColor(log, ConsoleColor.DarkRed);
-          break;
-        case LogType.Normal:
-        default:
-          Console.Write(log);
-          break;
-      }
-      Console.WriteLine();
+      AnsiConsole.Markup("[silver]LOG: [/]");
+      var log = GetLogString(text, logType);
+      AnsiConsole.Markup(log);
+      AnsiConsole.WriteLine();
     }
 
     /// <summary>
-    /// Console.ReadLine() with enter text.
+    /// Write log before ReadLine string.
     /// </summary>
-    /// <param name="enterText">Enter text.</param>
-    /// <returns>Input string.</returns>
-    public static string? ReadLine(string enterText)
+    /// <param name="text">Log text.</param>
+    /// <param name="logType">Log type.</param>
+    /// <param name="readLineText">ReadLine text.</param>
+    public static void WriteLogBeforeReadLine(string text, LogType logType, string readLineText)
     {
-      Console.WriteLine(enterText);
-      return Console.ReadLine();
+      Console.Write("\r");
+      WriteLog(text, logType);
+      Console.Write($"\r{readLineText}");
     }
+
+    /// <summary>
+    /// Get the colored text of the log.
+    /// </summary>
+    /// <param name="text">Log text.</param>
+    /// <param name="logType">Log type.</param>
+    /// <returns>Colored text.</returns>
+    private static string GetLogString(string text, LogType logType) => (logType) switch
+    {
+      (LogType.Warning) => $"[gold3_1]{text}[/]",
+      (LogType.Error) => $"[red3]{text}[/]",
+      (LogType.Info) or _ => text
+    };
   }
 }

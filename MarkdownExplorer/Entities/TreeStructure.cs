@@ -34,10 +34,9 @@ namespace MarkdownExplorer.Entities
     /// <param name="filePath">Absolute file path.</param>
     /// <param name="fileCode">File code.</param>
     /// <param name="title">File title.</param>
-    public void AddFileNode(string filePath, string fileCode, string title)
+    public void AddFileNode(string fileCode, string title, string href)
     {
-      var localFilePath = "file:///" + filePath.Replace('\\', '/');
-      this.content.Append($"<a id=\"{fileCode}\" href=\"{localFilePath}\" class=\"tree-view-item\">{title}</a>");
+      this.content.Append($"<a id=\"{fileCode}\" href=\"{href}\" class=\"tree-view-item\">{title}</a>");
     }
 
     /// <summary>

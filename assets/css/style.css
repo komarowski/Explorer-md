@@ -75,6 +75,7 @@ body {
   display: flex;
   width: 100%;
   flex-grow: 1;
+  max-width: calc(100% - 305px);
 }
 
 .container {
@@ -133,6 +134,7 @@ body {
 }
 
 .blog-container {
+  max-width: 950px;
   line-height: 1.6;
 }
 
@@ -145,12 +147,12 @@ body {
   margin-top: 2rem;
 }
 
-.blog-container h2 {
-  margin-top: 2rem;
-}
-
 .blog-container a {
   color: var(--link);
+}
+
+.blog-container a:hover {
+  color: var(--link-hover);
 }
 
 .blog-container pre {
@@ -167,6 +169,13 @@ body {
 .blog-container code {
   background-color: var(--code);
   border-radius: 4px;
+  padding: 1px 2px;
+  font-weight: bolder;
+}
+
+.blog-container pre code {
+  padding: 0px;
+  font-weight: normal;
 }
 
 .blog-container details {
@@ -182,7 +191,7 @@ body {
   color: var(--border);
   font-size: 1.1rem;
   cursor: pointer;
-  text-decoration: underline;
+  font-weight: bolder;
   -webkit-text-decoration-style: dotted;
   text-decoration-style: dotted;
 }
@@ -281,7 +290,7 @@ body {
 .tree-view-item-current {
   color: var(--link);
   border-radius: 5px;
-  background-color: var(--code);
+  background-color: #c3ccd5;
   font-weight: bold;
 }
 
@@ -306,39 +315,47 @@ table {
   border-spacing: 0px;
 }
 
-  table tr {
-      margin: 0;
-      padding: 0;
-  }
+table tr {
+  margin: 0;
+  padding: 0;
+}
 
-      table tr:nth-child(2n),
-      thead {
-          background-color: #f8f8f8;
-      }
+table tr:nth-child(2n),
+thead {
+  background-color: #f8f8f8;
+}
 
-  table th {
-      background-color: var(--border);
-      color: white;
-      border: 1px solid var(--border-light);
-      margin: 0;
-      padding: 6px 13px;
-  }
+table th {
+  background-color: var(--border);
+  color: white;
+  border: 1px solid var(--border-light);
+  margin: 0;
+  padding: 6px 13px;
+}
 
-  table td {
-      border: 1px solid var(--border-light);
-      margin: 0;
-      padding: 6px 13px;
-  }
+table td {
+  border: 1px solid var(--border-light);
+  margin: 0;
+  padding: 6px 13px;
+}
 
-      table th:first-child,
-      table td:first-child {
-          margin-top: 0;
-      }
+table th:first-child,
+table td:first-child {
+  margin-top: 0;
+}
 
-      table th:last-child,
-      table td:last-child {
-          margin-bottom: 0;
-      }
+table th:last-child,
+table td:last-child {
+  margin-bottom: 0;
+}
+	  
+blockquote {
+  background: #d4ecf7;
+  border-left: 8px solid var(--icon);
+  padding: 0.5rem 1rem;
+  margin: 1rem 0.5rem;
+}
+
 
 @media (max-width: 1500px) {
   .blog-col {

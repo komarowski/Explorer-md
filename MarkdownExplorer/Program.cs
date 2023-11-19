@@ -1,52 +1,33 @@
-﻿using MarkdownExplorer.Services;
+﻿using MarkdownExplorer;
 using MarkdownExplorer.Entities;
-using MarkdownExplorer;
-
+using MarkdownExplorer.Services;
+using Spectre.Console;
 
 ConsoleService.WriteGreeting();
 
-AppSettings? appSettings = JsonService.ReadJson<AppSettings>(JsonService.AppSettingsFile);
-if (appSettings is null)
+AppSettings? appSettings;
+while (!SettingsService.TryReadAppSettings(out appSettings))
 {
-  ConsoleService.WriteLog($"\"{JsonService.AppSettingsFile}\" file doesn't exist.", LogType.Warning);
-  string? sourceFolder = null;
-  while (string.IsNullOrEmpty(sourceFolder))
-  {
-    sourceFolder = ConsoleService.ReadLine("Enter source folder:");
-  }
-
-  if (!Directory.Exists(sourceFolder))
-  {
-    ConsoleService.WriteLog($"Entered folder \"{sourceFolder}\" doesn't exist.", LogType.Warning);
-    sourceFolder = Environment.CurrentDirectory;
-    ConsoleService.WriteLog($"The current folder \"{sourceFolder}\" is set as the source folder.", LogType.Info);
-  }
-
-  appSettings = new AppSettings() { SourceFolder = sourceFolder };
-  JsonService.WriteJson(appSettings, JsonService.AppSettingsFile);
-  ConsoleService.WriteLog($"\"{JsonService.AppSettingsFile}\" file has been created.", LogType.Info);
+  ConsoleService.WriteLog("Failed to read application settings. Try to change the settings.", LogType.Warning);
+  AnsiConsole.Prompt(new TextPrompt<string>("(enter anything to continue) >").AllowEmpty());
 }
 
-if (!Directory.Exists(appSettings.SourceFolder))
-{
-  ConsoleService.WriteLog($"Source folder \"{appSettings.SourceFolder}\" doesn't exist.", LogType.Error);
-  ConsoleService.ReadLine("Press 'enter' to exit.");
-  return;
-}
-
-var convertService = new ConvertService(appSettings);
-convertService.ConvertAllHtml();
-var _ = new FileWatcher(convertService, appSettings.SourceFolder);
+var convertService = new ConvertService(appSettings!);
+var updatedFilesNumber = convertService.ConvertAllHtml();
+ConsoleService.WriteLog($"Updated or added {updatedFilesNumber} files.", LogType.Info);
+var fileWatcher = new FileWatcher(convertService, appSettings!.SourceFolder);
 
 string? command;
 do
 {
-  command = ConsoleService.ReadLine("Enter command or press 'enter' to exit:");
+  command = AnsiConsole.Prompt(new TextPrompt<string>(">").AllowEmpty());
   if (command == "refresh")
   {
-    convertService.RefreshAll = true;
-    convertService.ConvertAllHtml();
-    convertService.RefreshAll = false;
+    convertService.ConvertAllHtml(true);
+  }
+  else if (command == "restart")
+  {
+    fileWatcher.RestartFileSystemWatcher();
   }
   else if (!string.IsNullOrEmpty(command))
   {

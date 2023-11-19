@@ -1,5 +1,6 @@
 using Markdig;
 using MarkdownExplorer.Entities;
+using System.IO;
 using System.Text;
 
 namespace MarkdownExplorer.Services
@@ -9,26 +10,20 @@ namespace MarkdownExplorer.Services
   /// </summary>
   public class ConvertService
   {
-    private const string HtmlTemplatePath = "template.html";
+    private const string IndexHtml = "index.html";
+    private const string TreeViewJS = "treeview.js";
+
+    private readonly string treeViewPath;
+    private readonly string indexHtmlPath;
+    private readonly string sourceFolder;
+    private readonly string targetFolder;
+    private readonly List<string> ignoreFolders;
+    private readonly string template;
+    private readonly FileLocationMode locationMode;
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
       .UseAdvancedExtensions()
       .Build();
-
-    private readonly string treeViewPath;
-
-    private readonly string indexHtmlPath;
-
-    private readonly string folder;
-
-    private readonly List<string> ignoreFolders;
-
-    private readonly string template;
-
-    /// <summary>
-    /// Update all files anyway.
-    /// </summary>
-    public bool RefreshAll { get; set; }
 
     /// <summary>
     /// Service for rendering static content.
@@ -36,27 +31,84 @@ namespace MarkdownExplorer.Services
     /// <param name="appSettings">Application settings.</param>
     public ConvertService(AppSettings appSettings)
     {
-      folder = appSettings.SourceFolder;
-      ignoreFolders = appSettings.IngnoreFolders; 
-      template = GetTemplate();
-      treeViewPath = Path.Combine(folder, "treeview.js");
-      indexHtmlPath = Path.Combine(folder, "index.html");
+      template = GetTemplate(appSettings.Template);
+      locationMode = appSettings.LocationMode;
+      sourceFolder = appSettings.SourceFolder;
+      targetFolder = appSettings.TargetFolder;
+      ignoreFolders = appSettings.IngnoreFolders;
+      treeViewPath = GetTargetPath(TreeViewJS);
+      indexHtmlPath = GetTargetPath(IndexHtml);
     }
 
     /// <summary>
-    /// Get html template.
+    /// Get target path.
     /// </summary>
-    /// <returns>Html template.</returns>
-    private static string GetTemplate()
+    /// <param name="name">File name.</param>
+    /// <returns>Target path.</returns>
+    private string GetTargetPath(string name)
     {
-      if (File.Exists(HtmlTemplatePath))
+      var targetDirectory = locationMode == FileLocationMode.Absolute ? sourceFolder : targetFolder;
+      return Path.Combine(targetDirectory, name);
+    }
+
+    /// <summary>
+    /// Get HTML template.
+    /// </summary>
+    /// <param name="templatePath">Template file path.</param>
+    /// <returns>HTML template content.</returns>
+    /// <exception cref="FileNotFoundException">Template file not exist.</exception>
+    private static string GetTemplate(string templatePath)
+    {
+      if (!File.Exists(templatePath))
       {
-        return File.ReadAllText(HtmlTemplatePath, Encoding.UTF8);
+        throw new FileNotFoundException($"\"{templatePath}\" not exists.");
+      }
+      return File.ReadAllText(templatePath, Encoding.UTF8);
+    }
+
+    /// <summary>
+    /// Processes the file.
+    /// </summary>
+    /// <param name="file">File.</param>
+    /// <param name="tree">Folder structure.</param>
+    /// <param name="refreshAll">Update all files anyway.</param>
+    private void ProcessFile(FileInfo file, TreeStructure tree, bool refreshAll)
+    {
+      var isAbsoluteLocationMode = locationMode == FileLocationMode.Absolute;
+      if (file.Extension == ".md")
+      {
+        var htmlCode = GetPathCode(file.FullName);
+        var htmlFile = isAbsoluteLocationMode
+          ? new FileInfo(file.FullName.Replace(".md", ".html")) 
+          : new FileInfo(Path.Combine(targetFolder, $"{htmlCode}.html"));
+        if (!htmlFile.Exists
+          || file.LastWriteTimeUtc > htmlFile.LastWriteTimeUtc
+          || refreshAll)
+        {
+          tree.AddMarkdownToUpdate(file.FullName, htmlCode);
+        }
+        var title = GetFileTitle(file);
+        var href = isAbsoluteLocationMode 
+          ? "file:///" + htmlFile.FullName.Replace('\\', '/') 
+          : $"{htmlCode}.html";
+        tree.AddFileNode(htmlCode, title, href);
+        return;
       }
 
-      ConsoleService.WriteLog($"\"{HtmlTemplatePath}\" file not found. Default file generated.", LogType.Warning);
-      File.WriteAllText(HtmlTemplatePath, StaticTemplate.DefaultHTML);
-      return StaticTemplate.DefaultHTML;
+      if (!isAbsoluteLocationMode 
+        && file.Extension != ".js" 
+        && file.Extension != ".html" 
+        && file.Extension != ".css")
+      {
+        var targetPath = Path.Combine(targetFolder, file.Name);
+        var targetFile = new FileInfo(targetPath);
+        if (!File.Exists(targetPath) 
+          || file.LastWriteTimeUtc > targetFile.LastWriteTimeUtc 
+          || refreshAll)
+        {
+          File.Copy(file.FullName, targetPath, true);
+        }
+      }
     }
 
     /// <summary>
@@ -65,12 +117,12 @@ namespace MarkdownExplorer.Services
     /// <param name="root">Root directory.</param>
     /// <param name="tree">Storing information.</param>
     /// <returns>Information about the folder structure.</returns>
-    private TreeStructure WalkDirectoryTree(DirectoryInfo root, TreeStructure tree)
+    private TreeStructure WalkDirectoryTree(DirectoryInfo root, TreeStructure tree, bool refreshAll)
     {
-      FileInfo[]? mdFiles = null;
+      FileInfo[]? files = null;
       try
       {
-        mdFiles = root.GetFiles("*.md");
+        files = root.GetFiles("*.*");
       }
       catch (UnauthorizedAccessException ex)
       {
@@ -81,20 +133,11 @@ namespace MarkdownExplorer.Services
         ConsoleService.WriteLog(ex.Message, LogType.Error);
       }
 
-      if (mdFiles is not null)
+      if (files is not null)
       {
-        foreach (FileInfo mdFile in mdFiles)
+        foreach (FileInfo file in files)
         {
-          var htmlCode = GetPathCode(mdFile.FullName);
-          var htmlFile = new FileInfo(mdFile.FullName.Replace(".md", ".html"));
-          if (!htmlFile.Exists 
-            || mdFile.LastWriteTimeUtc > htmlFile.LastWriteTimeUtc 
-            || RefreshAll)
-          {
-            tree.AddMarkdownToUpdate(mdFile.FullName, htmlCode);
-          }
-          var title = GetFileTitle(mdFile);
-          tree.AddFileNode(htmlFile.FullName, htmlCode, title);
+          ProcessFile(file, tree, refreshAll);
         }
 
         DirectoryInfo[] subDirs = root.GetDirectories();
@@ -106,7 +149,7 @@ namespace MarkdownExplorer.Services
           }
           var folderCode = GetPathCode(subDir.FullName);
           tree.AddFolderBlockStart(folderCode, subDir.Name);
-          tree = WalkDirectoryTree(subDir, tree);
+          tree = WalkDirectoryTree(subDir, tree, refreshAll);
           tree.AddFolderBlockEnd();
         }
       }
@@ -115,25 +158,27 @@ namespace MarkdownExplorer.Services
     }
 
     /// <summary>
-    /// Converting all markdown files to html.
+    ///  Converting all markdown files to html.
     /// </summary>
-    public void ConvertAllHtml()
+    /// <param name="refreshAll">Update all files anyway.</param>
+    /// <returns>Number of updated or added files.</returns>
+    public int ConvertAllHtml(bool refreshAll = false)
     {
       var tree = new TreeStructure();
-      tree = WalkDirectoryTree(new DirectoryInfo(folder), tree);
-      ConsoleService.WriteLog($"Updated or added {tree.MdFilesToConvert.Count} files.", LogType.Info);
+      tree = WalkDirectoryTree(new DirectoryInfo(sourceFolder), tree, refreshAll);
       foreach (var markdownFile in tree.MdFilesToConvert)
       {
         ConvertHtml(markdownFile.SourcePath, markdownFile.Code);
       }
 
-      if (!File.Exists(indexHtmlPath) || RefreshAll)
+      if (!File.Exists(indexHtmlPath) || refreshAll)
       {
         var html = InsertIntoTemplate(StaticTemplate.IndexHtmlText, string.Empty);
         File.WriteAllText(indexHtmlPath, html);
       }
 
       GenerateJS(tree);
+      return tree.MdFilesToConvert.Count;
     }
 
     /// <summary>
@@ -151,7 +196,9 @@ namespace MarkdownExplorer.Services
         var htmlText = Markdown.ToHtml(markdown, Pipeline);
         code ??= GetPathCode(markdownPath);
         var html = InsertIntoTemplate(htmlText, code);
-        var targetPath = markdownPath.Replace(".md", ".html");
+        var targetPath = locationMode == FileLocationMode.Absolute
+          ? markdownPath.Replace(".md", ".html")
+          : Path.Combine(targetFolder, $"{code}.html");
         using var streamWriter = new StreamWriter(targetPath);
         streamWriter.WriteLine(html);
       }
@@ -167,8 +214,16 @@ namespace MarkdownExplorer.Services
     {
       var template = this.template.Replace(StaticTemplate.FileCodePlace, htmlCode);
       template = template.Replace(StaticTemplate.MainBodyPlace, htmlText);
-      template = template.Replace(StaticTemplate.IndexLinkPlace, indexHtmlPath);
-      template = template.Replace(StaticTemplate.TreeViewLinkPlace, treeViewPath);
+      if (locationMode == FileLocationMode.Absolute)
+      {
+        template = template.Replace(StaticTemplate.IndexLinkPlace, indexHtmlPath);
+        template = template.Replace(StaticTemplate.TreeViewLinkPlace, treeViewPath);
+      } 
+      else
+      {
+        template = template.Replace(StaticTemplate.IndexLinkPlace, IndexHtml);
+        template = template.Replace(StaticTemplate.TreeViewLinkPlace, TreeViewJS);
+      }
       return template;
     }
 
@@ -189,11 +244,12 @@ namespace MarkdownExplorer.Services
     /// <returns>Title.</returns>
     private static string GetFileTitle(FileInfo file)
     {
-      using (var logStream = new StreamReader(file.FullName))
+      using (var fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+      using (var streamReader = new StreamReader(fileStream))
       {
         for (int i = 0; i < 3; i++)
         {
-          var line = logStream.ReadLine();
+          var line = streamReader.ReadLine();
           if (line is not null && line.TrimStart().StartsWith("# "))
           {
             return line.Trim()[2..];
@@ -211,7 +267,7 @@ namespace MarkdownExplorer.Services
     private string GetPathCode(string path)
     {
       path = path.Replace(".md", "");
-      var relativePath = Path.GetRelativePath(folder, path);
+      var relativePath = Path.GetRelativePath(sourceFolder, path);
       return relativePath
         .ToLower()
         .Replace(' ', '-')
