@@ -1,5 +1,6 @@
 using Markdig;
 using MarkdownExplorer.Entities;
+using System.IO;
 using System.Text;
 
 namespace MarkdownExplorer.Services
@@ -243,11 +244,12 @@ namespace MarkdownExplorer.Services
     /// <returns>Title.</returns>
     private static string GetFileTitle(FileInfo file)
     {
-      using (var logStream = new StreamReader(file.FullName))
+      using (var fileStream = new FileStream(file.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+      using (var streamReader = new StreamReader(fileStream))
       {
         for (int i = 0; i < 3; i++)
         {
-          var line = logStream.ReadLine();
+          var line = streamReader.ReadLine();
           if (line is not null && line.TrimStart().StartsWith("# "))
           {
             return line.Trim()[2..];
