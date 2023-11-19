@@ -37,7 +37,12 @@ namespace MarkdownExplorer.Services
       var welcomeString = new Padder(new Markup("[cyan3 bold underline]Welcome to Markdown Explorer![/]")).PadRight(30);
       AnsiConsole.Write(welcomeString);
       AnsiConsole.Write(new Rule("Commands:").LeftJustified());
-      AnsiConsole.Write(new Padder(new Markup("[darkcyan bold]refresh[/] - force refresh all html files")).PadRight(30));
+      var rows = new List<Markup>()
+      {
+        new Markup("[darkcyan bold] refresh[/] - force refresh all html files"),
+        new Markup("[darkcyan bold] restart[/] - restart FileSystemWatcher")
+      };
+      AnsiConsole.Write(new Rows(rows));
       AnsiConsole.Write(new Rule());
       AnsiConsole.WriteLine();
     }

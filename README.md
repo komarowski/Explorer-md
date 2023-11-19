@@ -15,6 +15,22 @@
 
 ## Conventions
 
+### App settings file
+
+All app settings locate in appsettings*.json files.
+
+```json
+{
+   "SourceFolder":"C:\\Documents\\MarkdownFolder",
+   "TargetFolder":"C:\\Documents\\HTMLFolder",
+   "Template":"template.html",
+   "LocationMode":1,
+   "IngnoreFolders":[
+      "assets"
+   ]
+}
+```
+
 ### Absolute paths
 
 Files refer to each other and to static files via absolute paths. If you moved the source folder, run the "refresh" command in the application.

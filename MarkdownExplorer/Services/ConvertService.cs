@@ -157,13 +157,14 @@ namespace MarkdownExplorer.Services
     }
 
     /// <summary>
-    /// Converting all markdown files to html.
+    ///  Converting all markdown files to html.
     /// </summary>
-    public void ConvertAllHtml(bool refreshAll = false)
+    /// <param name="refreshAll">Update all files anyway.</param>
+    /// <returns>Number of updated or added files.</returns>
+    public int ConvertAllHtml(bool refreshAll = false)
     {
       var tree = new TreeStructure();
       tree = WalkDirectoryTree(new DirectoryInfo(sourceFolder), tree, refreshAll);
-      ConsoleService.WriteLog($"Updated or added {tree.MdFilesToConvert.Count} files.", LogType.Info);
       foreach (var markdownFile in tree.MdFilesToConvert)
       {
         ConvertHtml(markdownFile.SourcePath, markdownFile.Code);
@@ -176,6 +177,7 @@ namespace MarkdownExplorer.Services
       }
 
       GenerateJS(tree);
+      return tree.MdFilesToConvert.Count;
     }
 
     /// <summary>
