@@ -13,8 +13,9 @@ while (!SettingsService.TryReadAppSettings(out appSettings))
 }
 
 var convertService = new ConvertService(appSettings!);
-convertService.ConvertAllHtml();
-var _ = new FileWatcher(convertService, appSettings!.SourceFolder);
+var updatedFilesNumber = convertService.ConvertAllHtml();
+ConsoleService.WriteLog($"Updated or added {updatedFilesNumber} files.", LogType.Info);
+var fileWatcher = new FileWatcher(convertService, appSettings!.SourceFolder);
 
 string? command;
 do
@@ -23,6 +24,10 @@ do
   if (command == "refresh")
   {
     convertService.ConvertAllHtml(true);
+  }
+  else if (command == "restart")
+  {
+    fileWatcher.RestartFileSystemWatcher();
   }
   else if (!string.IsNullOrEmpty(command))
   {

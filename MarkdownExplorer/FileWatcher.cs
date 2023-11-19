@@ -7,22 +7,34 @@ namespace MarkdownExplorer
   /// </summary>
   public class FileWatcher
   {
-    private readonly FileSystemWatcher fileSystemWatcher;
+    private readonly string rootDirectory;
+    private FileSystemWatcher fileSystemWatcher;
     private readonly ConvertService renderService;
     private DateTime lastRead = DateTime.MinValue;
 
     public FileWatcher(ConvertService renderService, string rootDirectory)
     {
+      this.rootDirectory = rootDirectory;
       this.renderService = renderService;
-      this.fileSystemWatcher = new FileSystemWatcher(rootDirectory);
+      InitializeFileWatcher();
+    }
 
+    private void InitializeFileWatcher()
+    {
+      this.fileSystemWatcher = new FileSystemWatcher(this.rootDirectory);
       this.fileSystemWatcher.Changed += OnChanged;
       this.fileSystemWatcher.Created += OnCreated;
       this.fileSystemWatcher.Deleted += OnDeleted;
-
+      this.fileSystemWatcher.Error += OnError;
       this.fileSystemWatcher.Filter = "*.md";
       this.fileSystemWatcher.IncludeSubdirectories = true;
       this.fileSystemWatcher.EnableRaisingEvents = true;
+    }
+
+    private void OnError(object sender, ErrorEventArgs e)
+    {
+      var exception = e.GetException();
+      ConsoleService.WriteLogBeforeReadLine($"An error occurred: {exception.Message}", LogType.Error, "> ");
     }
 
     private void OnChanged(object sender, FileSystemEventArgs e)
@@ -39,7 +51,7 @@ namespace MarkdownExplorer
       if (CheckLastReadTime(WatcherChangeTypes.Created, e))
       {
         ConsoleService.WriteLogBeforeReadLine($"added \"{e.Name}\"", LogType.Info, "> ");
-        renderService.ConvertAllHtml();       
+        renderService.ConvertAllHtml();
       }
     }
 
@@ -64,6 +76,15 @@ namespace MarkdownExplorer
         this.lastRead = lastWriteTime;
       }
       return isValid;
+    }
+
+    /// <summary>
+    /// Restart FileSystemWatcher.
+    /// </summary>
+    public void RestartFileSystemWatcher()
+    {
+      this.fileSystemWatcher.Dispose();
+      InitializeFileWatcher();
     }
   }
 }
