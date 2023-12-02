@@ -1,6 +1,5 @@
 using Markdig;
 using MarkdownExplorer.Entities;
-using System.IO;
 using System.Text;
 
 namespace MarkdownExplorer.Services
@@ -87,11 +86,14 @@ namespace MarkdownExplorer.Services
         {
           tree.AddMarkdownToUpdate(file.FullName, htmlCode);
         }
-        var title = GetFileTitle(file);
-        var href = isAbsoluteLocationMode 
-          ? "file:///" + htmlFile.FullName.Replace('\\', '/') 
-          : $"{htmlCode}.html";
-        tree.AddFileNode(htmlCode, title, href);
+        if (file.Name != "index.md")
+        {
+          var title = GetFileTitle(file);
+          var href = isAbsoluteLocationMode
+            ? "file:///" + htmlFile.FullName.Replace('\\', '/')
+            : $"{htmlCode}.html";
+          tree.AddFileNode(htmlCode, title, href);
+        }
         return;
       }
 

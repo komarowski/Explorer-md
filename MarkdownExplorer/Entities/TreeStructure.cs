@@ -25,7 +25,7 @@ namespace MarkdownExplorer.Entities
     public TreeStructure()
     {
       this.content = new StringBuilder();
-      this.MdFilesToConvert = new List<MarkdownFile>();
+      this.MdFilesToConvert = [];
     }
 
     /// <summary>

@@ -15,7 +15,7 @@ namespace MarkdownExplorer.Services
   /// <summary>
   /// Service for console methods.
   /// </summary>
-  public class ConsoleService
+  public static class ConsoleService
   {
     /// <summary>
     /// Write color text.
