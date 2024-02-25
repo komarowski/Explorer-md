@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace MarkdownExplorer.Entities
 {
   /// <summary>
@@ -7,12 +5,9 @@ namespace MarkdownExplorer.Entities
   /// </summary>
   public class TreeStructure
   {
-    private readonly StringBuilder content;
+    public Node CurrentNode { get; set; }
 
-    /// <summary>
-    /// HTML tree view of folder structure.
-    /// </summary>
-    public string Content => this.content.ToString();
+    public Node RootNode { get; }
 
     /// <summary>
     /// List of markdown files to convert to html.
@@ -24,7 +19,8 @@ namespace MarkdownExplorer.Entities
     /// </summary>
     public TreeStructure()
     {
-      this.content = new StringBuilder();
+      this.RootNode = new Node("", "root", "");
+      this.CurrentNode = RootNode;
       this.MdFilesToConvert = [];
     }
 
@@ -36,7 +32,8 @@ namespace MarkdownExplorer.Entities
     /// <param name="title">File title.</param>
     public void AddFileNode(string fileCode, string title, string href)
     {
-      this.content.Append($"<a id=\"{fileCode}\" href=\"{href}\" class=\"tree-view-item\">{title}</a>");
+      var node = new Node(fileCode, title, NodeType.File.ToString(), href);
+      this.CurrentNode.Children!.Add(node);
     }
 
     /// <summary>
@@ -44,17 +41,11 @@ namespace MarkdownExplorer.Entities
     /// </summary>
     /// <param name="folderCode">Folder code.</param>
     /// <param name="folderName">Folder name.</param>
-    public void AddFolderBlockStart(string folderCode, string folderName)
+    public Node AddFolderNode(string folderCode, string folderName)
     {
-      this.content.Append($"<details id=\"{folderCode}__\"><summary>{folderName}</summary><div class=\"tree-view-group\">");
-    }
-
-    /// <summary>
-    /// Add end of folder block.
-    /// </summary>
-    public void AddFolderBlockEnd()
-    {
-      this.content.Append("</div></details>");
+      var node = new Node(folderCode, folderName, NodeType.Folder.ToString());
+      this.CurrentNode.Children!.Add(node);
+      return node;
     }
 
     /// <summary>
