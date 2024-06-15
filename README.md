@@ -2,12 +2,16 @@
 
 **Explorer.md** is a simple console application for generating html docs from markdown files for use on your local machine. It also generates a tree view of these files for quick navigation. 
 
+The main purpose of this application is to organize your bookmarks, notes, articles, and code examples in a beautiful and efficient manner, storing them securely on your local machine.
+
 ## Features
 
-- Converts .md files to .html with a pure HTML layout (you can customize CSS or JS)
+- Converts .md files to .html with a pure HTML layout
+- Responsive web design
 - Shows a tree view of markdown files
 - Shows table of contents (h1, h2 tags)
 - Tracks changes in markdown files and modifies html accordingly.
+- Extended markdown syntax for details, image slider
 
 ## Demo
 

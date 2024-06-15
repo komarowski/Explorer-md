@@ -15,7 +15,7 @@ namespace MarkdownExplorer.Services
   /// <summary>
   /// Service for console methods.
   /// </summary>
-  public class ConsoleService
+  public static class ConsoleService
   {
     /// <summary>
     /// Write color text.
@@ -39,8 +39,8 @@ namespace MarkdownExplorer.Services
       AnsiConsole.Write(new Rule("Commands:").LeftJustified());
       var rows = new List<Markup>()
       {
-        new Markup("[darkcyan bold] refresh[/] - force refresh all html files"),
-        new Markup("[darkcyan bold] restart[/] - restart FileSystemWatcher")
+        new("[darkcyan bold] refresh[/] - force refresh all html files"),
+        new("[darkcyan bold] restart[/] - restart FileSystemWatcher")
       };
       AnsiConsole.Write(new Rows(rows));
       AnsiConsole.Write(new Rule());

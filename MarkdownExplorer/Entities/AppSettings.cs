@@ -45,6 +45,6 @@ namespace MarkdownExplorer.Entities
     /// <summary>
     /// List of ignore folders in source folder.
     /// </summary>
-    public List<string> IngnoreFolders { get; set; } = new List<string>();
+    public List<string> IngnoreFolders { get; set; } = [];
   }
 }

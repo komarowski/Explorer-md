@@ -1,7 +1,8 @@
 using Markdig;
 using MarkdownExplorer.Entities;
-using System.IO;
+using MarkdownExplorer.MarkdownExtensions;
 using System.Text;
+using System.Text.Json;
 
 namespace MarkdownExplorer.Services
 {
@@ -11,9 +12,9 @@ namespace MarkdownExplorer.Services
   public class ConvertService
   {
     private const string IndexHtml = "index.html";
-    private const string TreeViewJS = "treeview.js";
+    private const string TreeDataJS = "tree.js";
 
-    private readonly string treeViewPath;
+    private readonly string treeDataPath;
     private readonly string indexHtmlPath;
     private readonly string sourceFolder;
     private readonly string targetFolder;
@@ -23,6 +24,8 @@ namespace MarkdownExplorer.Services
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
       .UseAdvancedExtensions()
+      .Use<DetailsExtension>()
+      .Use<SliderExtension>()
       .Build();
 
     /// <summary>
@@ -36,7 +39,7 @@ namespace MarkdownExplorer.Services
       sourceFolder = appSettings.SourceFolder;
       targetFolder = appSettings.TargetFolder;
       ignoreFolders = appSettings.IngnoreFolders;
-      treeViewPath = GetTargetPath(TreeViewJS);
+      treeDataPath = GetTargetPath(TreeDataJS);
       indexHtmlPath = GetTargetPath(IndexHtml);
     }
 
@@ -87,11 +90,14 @@ namespace MarkdownExplorer.Services
         {
           tree.AddMarkdownToUpdate(file.FullName, htmlCode);
         }
-        var title = GetFileTitle(file);
-        var href = isAbsoluteLocationMode 
-          ? "file:///" + htmlFile.FullName.Replace('\\', '/') 
-          : $"{htmlCode}.html";
-        tree.AddFileNode(htmlCode, title, href);
+        if (file.Name != "index.md")
+        {
+          var title = GetFileTitle(file);
+          var href = isAbsoluteLocationMode
+            ? "file:///" + htmlFile.FullName.Replace('\\', '/')
+            : $"{htmlCode}.html";
+          tree.AddFileNode(htmlCode, title, href);
+        }
         return;
       }
 
@@ -148,9 +154,10 @@ namespace MarkdownExplorer.Services
             continue;
           }
           var folderCode = GetPathCode(subDir.FullName);
-          tree.AddFolderBlockStart(folderCode, subDir.Name);
+          var parentNode = tree.CurrentNode;
+          tree.CurrentNode = tree.AddFolderNode(folderCode, subDir.Name);
           tree = WalkDirectoryTree(subDir, tree, refreshAll);
-          tree.AddFolderBlockEnd();
+          tree.CurrentNode = parentNode;
         }
       }
 
@@ -217,12 +224,12 @@ namespace MarkdownExplorer.Services
       if (locationMode == FileLocationMode.Absolute)
       {
         template = template.Replace(StaticTemplate.IndexLinkPlace, indexHtmlPath);
-        template = template.Replace(StaticTemplate.TreeViewLinkPlace, treeViewPath);
+        template = template.Replace(StaticTemplate.TreeDataPlace, treeDataPath);
       } 
       else
       {
         template = template.Replace(StaticTemplate.IndexLinkPlace, IndexHtml);
-        template = template.Replace(StaticTemplate.TreeViewLinkPlace, TreeViewJS);
+        template = template.Replace(StaticTemplate.TreeDataPlace, TreeDataJS);
       }
       return template;
     }
@@ -233,8 +240,9 @@ namespace MarkdownExplorer.Services
     /// <param name="tree">Tree view.</param>
     public void GenerateJS(TreeStructure tree)
     {
-      var jsText = StaticTemplate.GetTreeViewJS(tree.Content);
-      File.WriteAllText(treeViewPath, jsText, Encoding.UTF8);
+      var jsonString = JsonSerializer.Serialize(tree.RootNode.Children);
+      var jsText = StaticTemplate.GetTreeDataJS(jsonString);
+      File.WriteAllText(treeDataPath, jsText, Encoding.UTF8);
     }
 
     /// <summary>
