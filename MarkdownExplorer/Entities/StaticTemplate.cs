@@ -16,8 +16,72 @@ namespace MarkdownExplorer.Entities
     /// <summary>
     /// Text for index.html file.
     /// </summary>
-    public const string IndexHtmlText = @"<h1>Welcome to Explorer.md!</h1>
-<p>This is the start page for your personal wiki.<p>";
+    public const string IndexHtmlText = @"<h1 id=""welcome-to-explorer.md"">Welcome to Explorer.md!</h1>
+<h2 id=""basic-syntax"">Basic Syntax</h2>
+<pre><code class=""language-markdown"">- I just love **bold text**.
+- Italicized text is the *cat's meow*.
+
+1. This text is ***really important***.
+2. Text with `code text`
+3. Text with [link to wikipedia](https://www.wikipedia.org/) 
+</code></pre>
+<ul>
+<li>I just love <strong>bold text</strong>.</li>
+<li>Italicized text is the <em>cat's meow</em>.</li>
+</ul>
+<ol>
+<li>This text is <em><strong>really important</strong></em>.</li>
+<li>Text with <code>code text</code></li>
+<li>Text with <a href=""https://www.wikipedia.org/"">link to wikipedia</a></li>
+</ol>
+<h2 id=""details-with-code-block"">Details with code block</h2>
+<div class=""code-toolbar""><pre class=""language-markdown"" tabindex=""0""><code class=""language-markdown"">@@details Sql query to get information about columns
+<br/>
+The `INFORMATION_SCHEMA.COLUMNS` view allows you to get information about all columns.
+<br/>
+<p>&#96;&#96;&#96;sql<p/>
+<p>SELECT *<p/>
+<p>FROM INFORMATION_SCHEMA.COLUMNS<p/>
+<p>WHERE TABLE_NAME='TableName'<p/>
+<p>&#96;&#96;&#96; <p/>
+@@
+</code></pre></div>
+<details>
+<summary>Sql query to get information about columns</summary>
+<div><p>The <code>INFORMATION_SCHEMA.COLUMNS</code> view allows you to get information about all columns.</p>
+<pre><code class=""language-sql"">SELECT *
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME='TableName'
+</code></pre>
+</div>
+</details>
+<h2 id=""image-slider"">Image slider</h2>
+<pre><code class=""language-markdown"">@@slider
+![image.jpg](You can use local images)
+![image_link](Or you can use image from Internet)
+@@
+</code></pre>
+<div class=""slider"" style=""height: 350px;"">
+<div class=""slide"">
+<img src=""https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/C_Sharp_Logo_2023.svg/1200px-C_Sharp_Logo_2023.svg.png"">
+<span>Conversion to HTML is done using C#</span>
+</div>
+<div class=""slide"">
+<img src=""https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Unofficial_JavaScript_logo_2.svg/1200px-Unofficial_JavaScript_logo_2.svg.png"">
+<span>HTML uses JS for interactivity</span>
+</div>
+<button class=""button-slider button-slider--prev""> &lt; </button>
+<button class=""button-slider button-slider--next""> &gt; </button>
+</div>
+<h2 id=""blockquotes"">Blockquotes</h2>
+<pre><code class=""language-markdown"">&gt; Dorothy followed her through many of the beautiful rooms in her castle.
+&gt;
+&gt; The Witch bade her clean the pots and kettles and sweep the floor and keep the fire fed with wood.
+</code></pre>
+<blockquote>
+<p>Dorothy followed her through many of the beautiful rooms in her castle.</p>
+<p>The Witch bade her clean the pots and kettles and sweep the floor and keep the fire fed with wood.</p>
+</blockquote>";
 
     /// <summary>
     /// Default html template with inline css and js.
