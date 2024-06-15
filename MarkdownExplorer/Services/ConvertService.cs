@@ -1,5 +1,6 @@
 using Markdig;
 using MarkdownExplorer.Entities;
+using MarkdownExplorer.MarkdownExtensions;
 using System.Text;
 using System.Text.Json;
 
@@ -23,6 +24,8 @@ namespace MarkdownExplorer.Services
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
       .UseAdvancedExtensions()
+      .Use<DetailsExtension>()
+      .Use<SliderExtension>()
       .Build();
 
     /// <summary>

@@ -106,7 +106,7 @@ namespace MarkdownExplorer.Services
         SourceFolder = currentDirectory,
         TargetFolder = currentDirectory,
         Template = DefaultTemplate,
-        IngnoreFolders = new List<string>()
+        IngnoreFolders = []
       };
       WriteJson(defaultAppSettings, AppSettingsFile);
       File.WriteAllText("template.html", StaticTemplate.DefaultHTML);
