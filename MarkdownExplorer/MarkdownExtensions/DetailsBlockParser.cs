@@ -47,8 +47,9 @@ namespace MarkdownExplorer.MarkdownExtensions
         return BlockState.BreakDiscard;
       }
 
+      var contentWithIndent = new string(' ', processor.Indent) + content;
       var currentDetailsBlock = (DetailsBlock)block;
-      currentDetailsBlock.ContentLines.Add(content);
+      currentDetailsBlock.ContentLines.Add(contentWithIndent);
       processor.GoToColumn(slice.Start + content.Length);
       return BlockState.Continue;
     }
